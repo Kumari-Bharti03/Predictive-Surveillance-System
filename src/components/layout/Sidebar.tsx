@@ -1,4 +1,4 @@
-import { LayoutDashboard, Activity, History, MapPin, Flame, Video, Shield } from 'lucide-react';
+import { LayoutDashboard, Activity, History, MapPin, Flame, Video, Shield, BrainCircuit, ScanFace } from 'lucide-react';
 import type { ModuleKey } from '@/lib/types';
 
 interface SidebarProps {
@@ -10,6 +10,8 @@ interface SidebarProps {
 const navItems: { key: ModuleKey; label: string; icon: typeof LayoutDashboard; description: string }[] = [
   { key: 'dashboard', label: 'Command Dashboard', icon: LayoutDashboard, description: 'Live overview' },
   { key: 'analytics', label: 'Threat Analytics', icon: Activity, description: 'AI predictions' },
+  { key: 'predictive', label: 'Predictive Alert Center', icon: BrainCircuit, description: 'AI threat forecasting' },
+  { key: 'behavioral', label: 'Behavioral Anomaly', icon: ScanFace, description: 'Suspicious behavior detection' },
   { key: 'incidents', label: 'Incident History', icon: History, description: 'Full log archive' },
   { key: 'zones', label: 'Zone Management', icon: MapPin, description: 'Perimeter control' },
   { key: 'heatmap', label: 'Threat Heatmap', icon: Flame, description: 'Spatial analysis' },

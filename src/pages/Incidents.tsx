@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { History, Search, Filter, ChevronDown, AlertCircle, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
 import { Card, Badge } from '@/components/ui/Card';
-import { incidents } from '@/lib/data';
+import { ExplainableAI } from '@/components/ExplainableAI';
+import { incidents, explainableAIByIncident } from '@/lib/data';
 import { getThreatColor, getThreatBgColor, getIncidentStatusColor, getIncidentStatusLabel } from '@/lib/utils';
 import type { ThreatLevel, IncidentStatus } from '@/lib/types';
 
@@ -139,22 +140,31 @@ export function Incidents() {
                     {isExpanded && (
                       <tr className="bg-slate-800/20 animate-fade-in">
                         <td colSpan={7} className="py-4 px-6">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="md:col-span-2">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="lg:col-span-1">
                               <p className="text-xs font-mono text-slate-500 uppercase mb-1">Description</p>
-                              <p className="text-sm text-slate-300 leading-relaxed">{inc.description}</p>
-                            </div>
-                            <div className="space-y-2">
-                              <div>
-                                <p className="text-xs font-mono text-slate-500 uppercase">Operator</p>
-                                <p className="text-sm text-slate-300">{inc.operator}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-mono text-slate-500 uppercase">Severity Level</p>
-                                <div className="mt-1">
-                                  <Badge text={inc.severity.toUpperCase()} color={sevColor} />
+                              <p className="text-sm text-slate-300 leading-relaxed mb-3">{inc.description}</p>
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs font-mono text-slate-500 uppercase">Operator</p>
+                                  <p className="text-sm text-slate-300">{inc.operator}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-mono text-slate-500 uppercase">Severity Level</p>
+                                  <div className="mt-1">
+                                    <Badge text={inc.severity.toUpperCase()} color={sevColor} />
+                                  </div>
                                 </div>
                               </div>
+                            </div>
+                            <div className="lg:col-span-2">
+                              {explainableAIByIncident[inc.id] ? (
+                                <ExplainableAI data={explainableAIByIncident[inc.id]} />
+                              ) : (
+                                <div className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/20 text-center">
+                                  <p className="text-xs font-mono text-slate-500">No AI explanation available for this incident</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>

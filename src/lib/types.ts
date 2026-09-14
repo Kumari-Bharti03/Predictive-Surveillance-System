@@ -4,7 +4,9 @@ export type ModuleKey =
   | 'incidents'
   | 'zones'
   | 'heatmap'
-  | 'cctv';
+  | 'cctv'
+  | 'predictive'
+  | 'behavioral';
 
 export type ThreatLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe';
 export type IncidentStatus = 'active' | 'investigating' | 'resolved' | 'false_alarm';
@@ -77,4 +79,56 @@ export interface HeatmapCell {
   hour: number;
   zone: string;
   intensity: number;
+}
+
+export interface PredictionFactor {
+  label: string;
+  weight: number;
+}
+
+export interface PredictedThreat {
+  id: string;
+  zone: string;
+  zoneId: string;
+  threatType: string;
+  currentRiskScore: number;
+  predictedRiskScore: number;
+  threatProbability: number;
+  aiConfidence: number;
+  estimatedTimeToIncident: string;
+  trend: 'rising' | 'stable' | 'falling';
+  trendDelta: number;
+  severity: ThreatLevel;
+  reasons: string[];
+  factors: PredictionFactor[];
+}
+
+export type AnomalyType =
+  | 'Loitering'
+  | 'Repeated Entry Attempts'
+  | 'Restricted Area Movement'
+  | 'Unusual Crowd Formation'
+  | 'Unattended Object';
+
+export interface BehavioralAnomaly {
+  id: string;
+  personId: string;
+  anomalyType: AnomalyType;
+  anomalyScore: number;
+  location: string;
+  duration: string;
+  threatLevel: ThreatLevel;
+  timeDetected: string;
+  description: string;
+  reasons: string[];
+  factors: PredictionFactor[];
+  cameraId: string;
+}
+
+export interface ExplainableAIData {
+  riskScore: number;
+  aiConfidence: number;
+  category: string;
+  reasons: string[];
+  factors: PredictionFactor[];
 }
