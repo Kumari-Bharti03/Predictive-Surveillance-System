@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, X, Video, ScanFace, Activity, Brain, GitBranch,
   CheckCircle2, Zap, Shield, Siren, Clock, Target, Cpu,
-  AlertTriangle, ArrowDown, Lock, Users, Eye, TrendingUp,
+  AlertTriangle, ArrowDown, Lock, Users, Eye, TrendingUp, RotateCcw,
 } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -61,6 +61,7 @@ const RESPONSE_ACTIONS = [
 export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [anomalyScore, setAnomalyScore] = useState(0);
   const [riskScore, setRiskScore] = useState(0);
   const [visibleEscalationEvents, setVisibleEscalationEvents] = useState(0);
@@ -69,10 +70,13 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [notifications, setNotifications] = useState<{ id: number; text: string; color: string }[]>([]);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const intervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach((t) => clearTimeout(t));
     timersRef.current = [];
+    intervalsRef.current.forEach((t) => clearInterval(t));
+    intervalsRef.current = [];
   }, []);
 
   const addNotification = useCallback((text: string, color: string) => {
@@ -88,6 +92,7 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
     clearAllTimers();
     setCurrentStep(0);
     setIsRunning(false);
+    setIsComplete(false);
     setAnomalyScore(0);
     setRiskScore(0);
     setVisibleEscalationEvents(0);
@@ -97,9 +102,17 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
     setNotifications([]);
   }, [clearAllTimers]);
 
+  const completeSimulation = useCallback(() => {
+    clearAllTimers();
+    setCurrentStep(SIM_STEPS.length - 1);
+    setIsRunning(false);
+    setIsComplete(true);
+    setVisibleActions(RESPONSE_ACTIONS.length);
+  }, [clearAllTimers]);
+
   const runStep = useCallback((stepIndex: number) => {
     if (stepIndex >= SIM_STEPS.length) {
-      setIsRunning(false);
+      completeSimulation();
       return;
     }
     setCurrentStep(stepIndex);
@@ -115,7 +128,7 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
         setAnomalyScore(Math.min(score, 87));
         if (score >= 87) clearInterval(interval);
       }, 80);
-      timersRef.current.push(setTimeout(() => clearInterval(interval), 3500) as unknown as ReturnType<typeof setTimeout>);
+      intervalsRef.current.push(interval);
     } else if (stepIndex === 2) {
       addNotification('Risk score updated — threat probability 87%', '#ff8c00');
       let score = 0;
@@ -124,7 +137,7 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
         setRiskScore(Math.min(score, 89));
         if (score >= 89) clearInterval(interval);
       }, 60);
-      timersRef.current.push(setTimeout(() => clearInterval(interval), 3000) as unknown as ReturnType<typeof setTimeout>);
+      intervalsRef.current.push(interval);
     } else if (stepIndex === 3) {
       addNotification('PREDICTIVE ALERT: North Gate escalation forecast', '#ff3b3b');
     } else if (stepIndex === 4) {
@@ -149,9 +162,15 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
       addNotification('THREAT PREVENTED — Response time: 2 min 14 sec', '#00ff9d');
     }
 
-    const t = setTimeout(() => runStep(stepIndex + 1), step.duration);
+    const t = setTimeout(() => {
+      if (stepIndex >= SIM_STEPS.length - 1) {
+        completeSimulation();
+      } else {
+        runStep(stepIndex + 1);
+      }
+    }, step.duration);
     timersRef.current.push(t);
-  }, [addNotification]);
+  }, [addNotification, completeSimulation]);
 
   const startSimulation = useCallback(() => {
     reset();
@@ -230,6 +249,12 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
                 <span className="text-xs font-mono text-slate-400">{formatElapsed(elapsedTime)}</span>
               </div>
             )}
+            {isComplete && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
+                <span className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-xs font-mono text-green-400 font-semibold">COMPLETE</span>
+              </div>
+            )}
             <button
               onClick={onClose}
               className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-800/50 border border-slate-700/30 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-all"
@@ -261,7 +286,7 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
 
         {/* Main Content */}
         <div className="p-6 min-h-[400px]">
-          {!isRunning && currentStep === 0 && (
+          {!isRunning && !isComplete && currentStep === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/30 mb-6 animate-pulse">
                 <Play className="w-10 h-10 text-cyan-400" />
@@ -293,7 +318,7 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
             </div>
           )}
 
-          {isRunning && step && (
+          {(isRunning || isComplete) && step && (
             <div className="space-y-5">
               {/* Current Step Header */}
               <div
@@ -318,10 +343,15 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
                   </div>
                   <p className="text-sm font-semibold text-slate-200">{step.subtitle}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full border-2 border-transparent animate-spin-slow" style={{ borderTopColor: step.color, borderRightColor: step.color }} />
+                {isRunning && !isComplete && (
+                  <div className="w-10 h-10 rounded-full border-2 border-transparent animate-spin-slow" style={{ borderTopColor: step.color, borderRightColor: step.color }} />
+                )}
+                {isComplete && (
+                  <CheckCircle2 className="w-8 h-8 text-green-400 shrink-0" />
+                )}
               </div>
 
-              {/* Step Content */}
+              {/* Step Content — final summary stays mounted after completion */}
               {currentStep === 0 && <StepCCTV />}
               {currentStep === 1 && <StepAnomaly anomalyScore={anomalyScore} />}
               {currentStep === 2 && <StepAnalytics riskScore={riskScore} />}
@@ -329,7 +359,9 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
               {currentStep === 4 && <StepEscalation visibleCount={visibleEscalationEvents} />}
               {currentStep === 5 && <StepExplainableAI visibleCount={visibleXaiReasons} />}
               {currentStep === 6 && <StepResponse visibleCount={visibleActions} />}
-              {currentStep === 7 && <StepFinal elapsed={formatElapsed(elapsedTime)} />}
+              {currentStep === 7 && (
+                <StepFinal elapsed={formatElapsed(elapsedTime)} onReplay={startSimulation} />
+              )}
             </div>
           )}
         </div>
@@ -353,13 +385,24 @@ export function ThreatSimulation({ open, onClose }: ThreatSimulationProps) {
               );
             })}
           </div>
-          {isRunning && (
-            <button
-              onClick={reset}
-              className="px-4 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 bg-slate-800/50 border border-slate-700/30 hover:text-slate-200 transition-all"
-            >
-              Reset Simulation
-            </button>
+          {(isRunning || isComplete) && (
+            <div className="flex items-center gap-2">
+              {isComplete && (
+                <button
+                  onClick={startSimulation}
+                  className="px-4 py-1.5 rounded-lg text-xs font-mono font-semibold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Replay Simulation
+                </button>
+              )}
+              <button
+                onClick={reset}
+                className="px-4 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 bg-slate-800/50 border border-slate-700/30 hover:text-slate-200 transition-all"
+              >
+                Reset Simulation
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -735,7 +778,7 @@ function StepResponse({ visibleCount }: { visibleCount: number }) {
   );
 }
 
-function StepFinal({ elapsed }: { elapsed: string }) {
+function StepFinal({ elapsed, onReplay }: { elapsed: string; onReplay: () => void }) {
   return (
     <div className="text-center py-6">
       <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-green-500/10 border-2 border-green-500/40 animate-scale-in" style={{ boxShadow: '0 0 32px rgba(0,255,157,0.3)' }}>
@@ -744,33 +787,39 @@ function StepFinal({ elapsed }: { elapsed: string }) {
       <h3 className="font-display text-2xl font-bold text-green-400 mb-2 tracking-wide">THREAT PREVENTED</h3>
       <p className="text-sm text-slate-400 mb-6">Sentinel AI successfully detected, predicted, and prevented a security threat at North Gate.</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5a">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5">
           <Shield className="w-5 h-5 text-green-400 mx-auto mb-2" />
-          <p className="text-[10px] font-mono text-slate-500 uppercase">Status</p>
-          <p className="text-sm font-display font-bold text-green-400">Secure</p>
+          <p className="text-[10px] font-mono text-slate-500 uppercase">Threat Prevented Status</p>
+          <p className="text-sm font-display font-bold text-green-400">Prevented — Secure</p>
         </div>
-        <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5a">
+        <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
           <Clock className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
           <p className="text-[10px] font-mono text-slate-500 uppercase">Response Time</p>
           <p className="text-sm font-display font-bold text-cyan-400">2 min 14 sec</p>
         </div>
-        <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-500/5a">
+        <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-500/5">
           <Target className="w-5 h-5 text-violet-400 mx-auto mb-2" />
           <p className="text-[10px] font-mono text-slate-500 uppercase">Prediction Accuracy</p>
           <p className="text-sm font-display font-bold text-violet-400">91%</p>
         </div>
-        <div className="p-4 rounded-xl border border-orange-500/20 bg-orange-500/5a">
-          <Activity className="w-5 h-5 text-orange-400 mx-auto mb-2" />
-          <p className="text-[10px] font-mono text-slate-500 uppercase">System Status</p>
-          <p className="text-sm font-display font-bold text-orange-400">Operational</p>
+        <div className="p-4 rounded-xl border border-orange-500/20 bg-orange-500/5">
+          <Cpu className="w-5 h-5 text-orange-400 mx-auto mb-2" />
+          <p className="text-[10px] font-mono text-slate-500 uppercase">AI Confidence</p>
+          <p className="text-sm font-display font-bold text-orange-400">91%</p>
+        </div>
+        <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 col-span-2">
+          <Zap className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
+          <p className="text-[10px] font-mono text-slate-500 uppercase">Recommended Actions Executed</p>
+          <p className="text-sm font-display font-bold text-cyan-300">3 of 3</p>
+          <p className="text-[10px] font-mono text-slate-500 mt-1">Deploy Security Team · Increase Camera Monitoring · Lock Nearby Access Points</p>
         </div>
       </div>
 
-      <div className="mt-6 p-4 rounded-xl border border-slate-700/20 bg-slate-800/30 max-w-2xl mx-auto">
+      <div className="mt-6 p-4 rounded-xl border border-slate-700/20 bg-slate-800/30 max-w-3xl mx-auto">
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle2 className="w-4 h-4 text-green-400" />
-          <span className="text-xs font-mono text-slate-500 uppercase">Simulation Summary</span>
+          <span className="text-xs font-mono text-slate-500 uppercase">Full Simulation Summary</span>
         </div>
         <div className="space-y-1.5 text-left">
           {[
@@ -795,6 +844,16 @@ function StepFinal({ elapsed }: { elapsed: string }) {
         <Clock className="w-3.5 h-3.5" />
         <span>Total Simulation Time: {elapsed}</span>
       </div>
+
+      <button
+        type="button"
+        onClick={onReplay}
+        className="mt-6 px-8 py-3 rounded-xl font-display font-bold tracking-wide text-cyan-300 bg-cyan-500/10 border-2 border-cyan-500/40 hover:bg-cyan-500/20 hover:scale-105 transition-all inline-flex items-center gap-2"
+        style={{ boxShadow: '0 0 24px rgba(0,229,255,0.2)' }}
+      >
+        <RotateCcw className="w-5 h-5" />
+        Replay Simulation
+      </button>
     </div>
   );
 }
