@@ -9,13 +9,19 @@ import { Heatmap } from '@/pages/Heatmap';
 import { CCTV } from '@/pages/CCTV';
 import { PredictiveAlerts } from '@/pages/PredictiveAlerts';
 import { BehavioralAnomaly } from '@/pages/BehavioralAnomaly';
+import { EscalationTimeline } from '@/pages/EscalationTimeline';
+import { AIResponseCenter } from '@/pages/AIResponseCenter';
+import { ExecutiveOverview } from '@/pages/ExecutiveOverview';
 import type { ModuleKey } from '@/lib/types';
 
 const moduleMeta: Record<ModuleKey, { title: string; subtitle: string }> = {
   dashboard: { title: 'Command Dashboard', subtitle: 'Real-time surveillance overview // Live' },
+  executive: { title: 'Executive Security Overview', subtitle: 'Decision-ready summary for stakeholders // Live' },
   analytics: { title: 'Threat Analytics', subtitle: 'AI-powered threat prediction and analysis' },
   predictive: { title: 'Predictive Alert Center', subtitle: 'AI threat forecasting // Next 30 minutes' },
   behavioral: { title: 'Behavioral Anomaly Detection', subtitle: 'Suspicious behavior pattern identification // Live' },
+  escalation: { title: 'Threat Escalation Timeline', subtitle: 'How minor activities evolve into major threats' },
+  response: { title: 'AI Response Recommendation Center', subtitle: 'Auto-generated security action recommendations' },
   incidents: { title: 'Incident History', subtitle: 'Complete incident log and tracking system' },
   zones: { title: 'Zone Management', subtitle: 'Perimeter security zone control and monitoring' },
   heatmap: { title: 'Threat Heatmap', subtitle: 'Spatial threat analysis and hotspot detection' },
@@ -39,9 +45,12 @@ function App() {
         />
         <main className="p-4 lg:p-6">
           {activeModule === 'dashboard' && <Dashboard />}
+          {activeModule === 'executive' && <ExecutiveOverview />}
           {activeModule === 'analytics' && <Analytics />}
           {activeModule === 'predictive' && <PredictiveAlerts />}
           {activeModule === 'behavioral' && <BehavioralAnomaly />}
+          {activeModule === 'escalation' && <EscalationTimeline />}
+          {activeModule === 'response' && <AIResponseCenter />}
           {activeModule === 'incidents' && <Incidents />}
           {activeModule === 'zones' && <Zones />}
           {activeModule === 'heatmap' && <Heatmap />}

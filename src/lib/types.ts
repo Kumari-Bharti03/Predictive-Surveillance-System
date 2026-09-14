@@ -6,7 +6,10 @@ export type ModuleKey =
   | 'heatmap'
   | 'cctv'
   | 'predictive'
-  | 'behavioral';
+  | 'behavioral'
+  | 'escalation'
+  | 'response'
+  | 'executive';
 
 export type ThreatLevel = 'critical' | 'high' | 'medium' | 'low' | 'safe';
 export type IncidentStatus = 'active' | 'investigating' | 'resolved' | 'false_alarm';
@@ -131,4 +134,41 @@ export interface ExplainableAIData {
   category: string;
   reasons: string[];
   factors: PredictionFactor[];
+}
+
+export interface EscalationEvent {
+  id: string;
+  step: number;
+  title: string;
+  description: string;
+  severity: ThreatLevel;
+  riskScore: number;
+  timestamp: string;
+  zone: string;
+  aiAnalysis: string;
+  icon: string;
+}
+
+export interface EscalationTimeline {
+  id: string;
+  title: string;
+  zone: string;
+  finalSeverity: ThreatLevel;
+  events: EscalationEvent[];
+  riskProgression: { time: string; score: number }[];
+  status: 'active' | 'resolved' | 'monitoring';
+}
+
+export interface AIResponseAction {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  threatZone: string;
+  threatType: string;
+  effectiveness: number;
+  aiConfidence: number;
+  estimatedResponseTime: string;
+  actions: string[];
+  icon: string;
 }
