@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import {
   Shield, Brain, TrendingUp, AlertTriangle, Activity, Cpu, Database,
   ScanFace, Fingerprint, Target, Zap, CheckCircle2, MapPin, Clock,
-  Siren, ArrowUpRight,
+  Siren, ArrowUpRight, Play,
 } from 'lucide-react';
 import { Card, Badge } from '@/components/ui/Card';
 import { RadialGauge, ProgressBar } from '@/components/ui/ProgressBar';
 import { LineChart } from '@/components/charts/LineChart';
 import { FacilityMap } from '@/components/charts/FacilityMap';
+import { ThreatSimulation } from '@/components/ThreatSimulation';
 import {
   executiveSummary,
   aiPredictionMethodology,
@@ -22,24 +24,37 @@ const methodologyIcons: Record<string, typeof Database> = {
 };
 
 export function ExecutiveOverview() {
+  const [simOpen, setSimOpen] = useState(false);
   const highRiskZones = zones.filter((z) => z.riskScore > 60).sort((a, b) => b.riskScore - a.riskScore);
   const activeIncidents = incidents.filter((i) => i.status === 'active' || i.status === 'investigating');
   const criticalPredictions = predictedThreats.filter((p) => p.severity === 'critical' || p.severity === 'high');
 
   return (
     <div className="space-y-5">
+      <ThreatSimulation open={simOpen} onClose={() => setSimOpen(false)} />
+
       {/* Hero Summary Section */}
       <Card scan className="relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-10 bg-red-500" />
         <div className="relative">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/30">
-              <Shield className="w-5 h-5 text-cyan-400" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-blue-600/10 border border-cyan-500/30">
+                <Shield className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-bold tracking-wide text-cyan-300 uppercase">Executive Security Overview</h2>
+                <p className="text-xs font-mono text-slate-500">Sentinel AI Decision Support System // Real-time Summary for Stakeholders</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-display text-lg font-bold tracking-wide text-cyan-300 uppercase">Executive Security Overview</h2>
-              <p className="text-xs font-mono text-slate-500">Sentinel AI Decision Support System // Real-time Summary for Stakeholders</p>
-            </div>
+            <button
+              onClick={() => setSimOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold tracking-wide text-cyan-300 bg-cyan-500/10 border-2 border-cyan-500/40 hover:bg-cyan-500/20 hover:scale-105 transition-all"
+              style={{ boxShadow: '0 0 20px rgba(0,229,255,0.15)' }}
+            >
+              <Play className="w-4 h-4" />
+              Start Threat Simulation
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
